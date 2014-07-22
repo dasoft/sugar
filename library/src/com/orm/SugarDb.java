@@ -1,7 +1,7 @@
 package com.orm;
 
 import static com.orm.SugarConfig.getDatabaseVersion;
-import static com.orm.SugarConfig.getDebugEnabled;
+import static com.orm.SugarConfig.getDebugEnabled;  
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -29,6 +29,7 @@ import com.orm.dsl.Table;
 import com.orm.dsl.Column;
 import com.orm.dsl.NotNull;
 import com.orm.dsl.Unique;
+import com.orm.dsl.Index;
 
 import dalvik.system.DexFile;
 
@@ -166,6 +167,8 @@ public class SugarDb extends SQLiteOpenHelper {
         StringBuilder sb = new StringBuilder("CREATE TABLE ").append(table.getSqlName()).append(
                 " ( ID INTEGER PRIMARY KEY AUTOINCREMENT ");
 
+        List<String> indexes = new ArrayList<String>();
+
         for (Field column : fields) {
             String columnName = StringUtil.toSQLName(column);
             String columnType = QueryBuilder.getColumnType(column.getType());
@@ -193,6 +196,13 @@ public class SugarDb extends SQLiteOpenHelper {
                         sb.append(" UNIQUE");
                     }
 
+                    if (columnAnnotation.index()) {
+                        StringBuilder idxSb = new StringBuilder("CREATE INDEX IF NOT EXISTS ")
+                            .append(columnName).append("_idx ON ").append(table.getSqlName())
+                            .append(" (").append(columnName).append(" ASC)");
+                        indexes.add(idxSb.toString());
+                    }
+
                 }else {
 
                     sb.append(", ").append(columnName).append(" ").append(columnType);
@@ -206,6 +216,14 @@ public class SugarDb extends SQLiteOpenHelper {
 
                     if (column.isAnnotationPresent(Unique.class)) {
                         sb.append(" UNIQUE");
+                    }
+
+                    if (column.isAnnotationPresent(Index.class)) {
+                        Index columnAnnotation = column.getAnnotation(Index.class);
+                        StringBuilder idxSb = new StringBuilder("CREATE INDEX IF NOT EXISTS ")
+                            .append(columnName).append("_idx ON ").append(table.getSqlName())
+                            .append(" (").append(columnName).append(" ").append(columnAnnotation.sort()).append(")");
+                        indexes.add(idxSb.toString());
                     }
                 }
             }
@@ -221,9 +239,12 @@ public class SugarDb extends SQLiteOpenHelper {
         sb.append(" ) ");
 
         Log.i("Sugar", "creating table " + table.getSqlName());
-
         if (!"".equals(sb.toString()))
             sqLiteDatabase.execSQL(sb.toString());
+
+        for (String idx : indexes) {
+            sqLiteDatabase.execSQL(idx);
+        }
     }
 
     @Override
