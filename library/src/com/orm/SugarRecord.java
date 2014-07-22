@@ -8,6 +8,7 @@ import android.database.sqlite.SQLiteStatement;
 import android.text.TextUtils;
 import android.util.Log;
 import com.orm.dsl.Ignore;
+import com.orm.dls.View;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -388,6 +389,9 @@ public class SugarRecord<T>{
 
 
     public static String getTableName(Class<?> type) {
+        if(type.isAnnotationPresent(View.class)) {
+          return type.isAnnotationPresent(View.class).name(); 
+        }
         return StringUtil.toSQLNameDefault(type.getSimpleName());
     }
 
