@@ -26,6 +26,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
 import com.orm.dsl.Table;
+import com.orm.dsl.View;
 import com.orm.dsl.Column;
 import com.orm.dsl.NotNull;
 import com.orm.dsl.Unique;
@@ -157,8 +158,20 @@ public class SugarDb extends SQLiteOpenHelper {
 
     private <T extends SugarRecord<?>> void createDatabase(SQLiteDatabase sqLiteDatabase) {
         List<T> domainClasses = getDomainClasses(context);
+        List<T> views = new ArrayList<T>();
         for (T domain : domainClasses) {
+            if(domain.getClass().isAnnotationPresent(View.class))
+            {
+                views.add(domain);
+                continue; // Skip, tables must be present to create views
+            }
+
             createTable(domain, sqLiteDatabase);
+        }
+
+        for (T view : views)
+        {
+            createView(view, sqLiteDatabase);
         }
     }
 
@@ -254,6 +267,19 @@ public class SugarDb extends SQLiteOpenHelper {
         for (String idx : indexes) {
             sqLiteDatabase.execSQL(idx);
         }
+    }
+    
+    private <T extends SugarRecord<?>> void createView(T view, SQLiteDatabase sqLiteDatabase) {
+        if(!view.getClass().isAnnotationPresent(View.class)) {
+            throw new RuntimeException("Attempting to create VIEW on class " + view.getClass().getName() + " missing @View annotation");
+        }
+        if(view.getClass().isAnnotationPresent(Table.class)) {
+            throw new RuntimeException("Mutually exclusive annotations @View and @Table on " + view.getClass().getName());
+        }
+        Log.i("Sugar", "create view");
+        StringBuilder sb = new StringBuilder("CREATE VIEW ").append(view.getSqlName()).append(" AS ").append(view.getClass().getAnnotation(View.class).select());
+        Log.i("Sugar", "creating view " + view.getSqlName());
+        sqLiteDatabase.execSQL(sb.toString());
     }
 
     @Override

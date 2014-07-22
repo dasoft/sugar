@@ -9,6 +9,7 @@ import android.text.TextUtils;
 import android.util.Log;
 import com.orm.dsl.Ignore;
 import com.orm.dsl.Table;
+import com.orm.dls.View;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -391,9 +392,11 @@ public class SugarRecord<T>{
     public static String getTableName(Class<?> type) {
         if(type.isAnnotationPresent(Table.class)) {
             return type.getAnnotation(Table.class).name();
-        } else {
-            return StringUtil.toSQLNameDefault(type.getSimpleName());
         }
+        if(type.isAnnotationPresent(View.class)) {
+          return type.isAnnotationPresent(View.class).name(); 
+        }
+        return StringUtil.toSQLNameDefault(type.getSimpleName());
     }
 
     public Long getId() {
