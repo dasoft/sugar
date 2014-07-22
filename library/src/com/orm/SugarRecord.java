@@ -8,7 +8,7 @@ import android.database.sqlite.SQLiteStatement;
 import android.text.TextUtils;
 import android.util.Log;
 import com.orm.dsl.Ignore;
-import com.orm.dls.View;
+import com.orm.dsl.View;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
