@@ -8,4 +8,5 @@ public @interface Column {
     String name();
     boolean unique() default false;
     boolean notNull() default false;
+    boolean index() default false;
 }
