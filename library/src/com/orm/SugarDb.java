@@ -30,6 +30,7 @@ import com.orm.dsl.Column;
 import com.orm.dsl.NotNull;
 import com.orm.dsl.Unique;
 import com.orm.dsl.Index;
+import com.orm.dsl.References;
 
 import dalvik.system.DexFile;
 
@@ -225,6 +226,14 @@ public class SugarDb extends SQLiteOpenHelper {
                             .append(" (").append(columnName).append(" ").append(columnAnnotation.sort()).append(")");
                         indexes.add(idxSb.toString());
                     }
+                }
+                
+                if (column.isAnnotationPresent(References.class)) {
+                    References columnAnnotation = column.getAnnotation(References.class);
+                    sb.append(" REFERENCES ").append(columnAnnotation.foreignTable())
+                            .append(" (").append(columnAnnotation.foreignColumn()).append(") ")
+                            .append(" ON DELETE ").append(columnAnnotation.onDelete())
+                            .append(" ON UPDATE ").append(columnAnnotation.onUpdate());
                 }
             }
         }
